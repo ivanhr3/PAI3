@@ -23,32 +23,27 @@ REPORT_DIRECTORY = conf.REPORT_DIRECTORY
 FRECUENCY = conf.HOUR_FRECUENCY
 ENCODING = 'utf-8'
 
+
 class Server:
     # 256 bits random number
     key = 108079546209274483481442683641105470668825844172663843934775892731209928221929
-
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    context.load_verify_locations('/path/to/certchain.pem', '/path/to/private.key')
 
     def __init__(self, host='127.0.0.1', port=55333):
         self.host = host
         self.port = port
         self.db = sqlite3.connect('nonce.db')
         initialize_db(self.db)
-        
-        # s = schedule()
-        # s.every(1).minutes.do(self.reports())
 
-        # s = sched.scheduler(time.time, time.sleep)
-        # s.enterabs(10000000000, 1, action=self.reports())
 
     def run(self):
         while True:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as s:
-                s.bind((self.host, self.port))
-                s.listen(5)
-                with context.wrap_socket(s, server_side=True) as sock:
-                    conn, addr = sock.accept()
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
+                sock.bind((self.host, self.port))
+                sock.listen(5)
+                with ssl.wrap_socket(sock, certfile="C:/certs/certificate.pem", keyfile="C:/certs/key.pem",
+                                     server_side=True) as ssock:
+                    conn, addr = ssock.accept()
+                    print(ssock.version())
                     with conn:
                         if DEBUG_MODE:
                             print('Connected by', addr)
@@ -88,7 +83,7 @@ class Server:
                             dumped_response = json.dumps(response)
                             conn.sendall(bytes(dumped_response, encoding=ENCODING))
 
-                s.close()
+                sock.close()
 
     @staticmethod
     def reports():
@@ -134,14 +129,19 @@ def generate_hmac(key, message, nonce):
 
 
 if __name__ == "__main__":
+    # context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    # context.load_verify_locations('C:/certs/certificate.pem', 'C:/certs/key.pem')
+    # context.load_cert_chain("C:/certs/certificate.pem", "C:/certs/key.pem")
+    # # context.options &= ~ssl.OP_NO_SSLv3
+    #
+    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
+    #     sock.bind((HOST, PORT))
+    #     sock.listen(5)
+    #     with ssl.wrap_socket(sock,certfile="C:/certs/certificate.pem", keyfile="C:/certs/key.pem", server_side=True) as ssock:
+    #         conn, addr = ssock.accept()
+    #         print(ssock.version())
+
     server = Server(HOST, PORT)
-
-    s = schedule.Scheduler()
-    s.every(1).minute.do(server.reports)
-    s.run_pending()
-
-    sched1 = scheduler.CustomScheduler(s)
-    sched1.threaded_schedule()
-
     server.run()
+
 
