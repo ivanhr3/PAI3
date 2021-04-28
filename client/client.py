@@ -41,7 +41,6 @@ class Client:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             with self.context.wrap_socket(s, server_hostname="ST17") as sock:
                 sock.connect((self.host, self.port))
-                print(sock.version())
                 dumped_data = json.dumps(request)
                 sock.sendall(bytes(dumped_data, encoding="utf-8"))
                 response = sock.recv(1024)
@@ -60,8 +59,13 @@ class Client:
 
 
 if __name__ == "__main__":
-    cliente = Client(HOST,PORT)
-    cliente.auth("test","tes", "test")
+    print()
+    for i in range(0, CALL_NUMBER):ç
+        try:
+            cliente = Client(HOST, PORT)
+            cliente.auth("test","tes", "test")
+        except:
+            pass
 
 
 
