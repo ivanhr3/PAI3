@@ -6,7 +6,11 @@ from hashlib import sha3_256
 import hmac
 import conf
 import ssl
+import logging
+import time
+import threading
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s :: %(levelname)s :: %(message)s')
 
 HOST = conf.SERVER_IP
 PORT = conf.SERVER_PORT
@@ -57,15 +61,19 @@ class Client:
         print(str(response))
         print('Auth complete')
 
-
 if __name__ == "__main__":
-    print()
-    for i in range(0, CALL_NUMBER):ç
+    logging.debug("Starting connections")
+    errors = 0
+    t1 = time.time()
+    for i in range(0, CALL_NUMBER):
         try:
             cliente = Client(HOST, PORT)
-            cliente.auth("test","tes", "test")
+            cliente.auth("test", "tes", "test")
         except:
+            errors+=1
             pass
+    t2 = time.time()
+    logging.debug(f"All connections finished with {str(errors)} errors in {t2-t1} seconds")
 
 
 

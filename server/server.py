@@ -129,18 +129,6 @@ def generate_hmac(key, message, nonce):
 
 
 if __name__ == "__main__":
-    # context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    # context.load_verify_locations('C:/certs/certificate.pem', 'C:/certs/key.pem')
-    # context.load_cert_chain("C:/certs/certificate.pem", "C:/certs/key.pem")
-    # # context.options &= ~ssl.OP_NO_SSLv3
-    #
-    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
-    #     sock.bind((HOST, PORT))
-    #     sock.listen(5)
-    #     with ssl.wrap_socket(sock,certfile="C:/certs/certificate.pem", keyfile="C:/certs/key.pem", server_side=True) as ssock:
-    #         conn, addr = ssock.accept()
-    #         print(ssock.version())
-
     server = Server(HOST, PORT)
     server.run()
 
