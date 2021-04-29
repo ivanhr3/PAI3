@@ -12,6 +12,7 @@ HOST = conf.SERVER_IP
 PORT = conf.SERVER_PORT
 DEBUG_MODE = conf.DEBUG_MODE
 CALL_NUMBER = conf.CALL_NUMBER
+TRUSTED_CERT = conf.TRUSTED_CERT
 ENCODING = 'utf-8'
 
 
@@ -30,12 +31,13 @@ class Client:
     # 256 bits random number
     key = 108079546209274483481442683641105470668825844172663843934775892731209928221929
 
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    context.load_verify_locations("C:/certs/certificate.pem")
-
-    def __init__(self, host='127.0.0.1', port=55333):
+    def __init__(self, host='127.0.0.1', port=55333, trusted_cert="./dummy_certs/certificate.pem"):
         self.host = host
         self.port = port
+        self.trusted_cert = trusted_cert
+
+        self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        self.context.load_verify_locations(trusted_cert)
     
     def send_request(self, request):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -59,10 +61,9 @@ class Client:
 
 
 if __name__ == "__main__":
-    print()
-    for i in range(0, CALL_NUMBER):ç
+    for i in range(0, CALL_NUMBER):
         try:
-            cliente = Client(HOST, PORT)
+            cliente = Client(HOST, PORT, TRUSTED_CERT)
             cliente.auth("test","tes", "test")
         except:
             pass
