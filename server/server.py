@@ -4,13 +4,11 @@ from hashlib import sha3_256
 import hmac
 import sqlite3
 import conf
-import schedule
 from custom_logger import warning, info
 from database import initialize_db, duplicated_nonce, insert_new_nonce, insert_no_attack, insert_reply_attack, insert_integrity_attack, select_attacked, select_all_responses, ATTACK_INTEGRITY, ATTACK_REPLY
 import datetime
-import time
-import scheduler
 import ssl
+import os
 
 HOST = conf.SERVER_IP
 PORT = conf.SERVER_PORT
@@ -22,28 +20,34 @@ SCAN_DIRECTORY = conf.SCAN_DIRECTORY
 REPORT_DIRECTORY = conf.REPORT_DIRECTORY
 FRECUENCY = conf.HOUR_FRECUENCY
 ENCODING = 'utf-8'
+CERT = conf.CERT
+KEY = conf.KEY
 
 
 class Server:
     # 256 bits random number
     key = 108079546209274483481442683641105470668825844172663843934775892731209928221929
 
-    def __init__(self, host='127.0.0.1', port=55333):
+    def __init__(self, host='127.0.0.1', port=55333, cert_file="./dummy_certs/certificate.pem",
+                 key_file="./dummy_certs/key.pem"):
         self.host = host
         self.port = port
+        self.cert_file = os.path.abspath(cert_file)
+        self.key_file = os.path.abspath(key_file)
         self.db = sqlite3.connect('nonce.db')
-        initialize_db(self.db)
 
+        self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        self.context.load_cert_chain(cert_file, key_file)
+        self.context.set_ciphers("ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305-SHA256:ECDHE-RSA-CHACHA20-POLY1305-SHA256:ECDHE-ECDSA-AES-256-GCM-SHA384:ECDHE-RSA-AES-256-GCM-SHA384")
+        initialize_db(self.db)
 
     def run(self):
         while True:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
                 sock.bind((self.host, self.port))
-                sock.listen(5)
-                with ssl.wrap_socket(sock, certfile="C:/certs/certificate.pem", keyfile="C:/certs/key.pem",
-                                     server_side=True) as ssock:
+                sock.listen(10)
+                with self.context.wrap_socket(sock, server_side=True) as ssock:
                     conn, addr = ssock.accept()
-                    print(ssock.version())
                     with conn:
                         if DEBUG_MODE:
                             print('Connected by', addr)
@@ -129,19 +133,7 @@ def generate_hmac(key, message, nonce):
 
 
 if __name__ == "__main__":
-    # context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    # context.load_verify_locations('C:/certs/certificate.pem', 'C:/certs/key.pem')
-    # context.load_cert_chain("C:/certs/certificate.pem", "C:/certs/key.pem")
-    # # context.options &= ~ssl.OP_NO_SSLv3
-    #
-    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
-    #     sock.bind((HOST, PORT))
-    #     sock.listen(5)
-    #     with ssl.wrap_socket(sock,certfile="C:/certs/certificate.pem", keyfile="C:/certs/key.pem", server_side=True) as ssock:
-    #         conn, addr = ssock.accept()
-    #         print(ssock.version())
-
-    server = Server(HOST, PORT)
+    server = Server(HOST, PORT, CERT, KEY)
     server.run()
 
 
